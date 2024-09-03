@@ -1,0 +1,177 @@
+To create different types of charts from Excel data in a single application using C# and .NET Core, you can extend the previous example by including multiple chart types and generating them based on the same dataset. Here’s a complete example showing how to generate a scatter plot, line plot, and bar chart using ScottPlot and save each as a separate image file.
+
+### **1. Setup**
+
+Make sure you have the required libraries installed:
+
+```bash
+dotnet add package ClosedXML
+dotnet add package ScottPlot
+```
+
+### **2. Read Data from Excel**
+
+First, ensure you have a method to read data from Excel into a `DataTable`. This is the same as previously provided:
+
+```csharp
+using ClosedXML.Excel;
+using System;
+using System.Data;
+
+public class ExcelReader
+{
+    public DataTable ReadExcelData(string filePath)
+    {
+        var dataTable = new DataTable();
+
+        using (var workbook = new XLWorkbook(filePath))
+        {
+            var worksheet = workbook.Worksheets.Worksheet(1); // Get the first worksheet
+            var range = worksheet.RangeUsed(); // Get the range of used cells
+
+            // Add columns
+            foreach (var cell in range.Row(1).Cells())
+            {
+                dataTable.Columns.Add(cell.Value.ToString());
+            }
+
+            // Add rows
+            for (int row = 2; row <= range.RowCount(); row++)
+            {
+                var dataRow = dataTable.NewRow();
+                for (int col = 1; col <= range.ColumnCount(); col++)
+                {
+                    dataRow[col - 1] = range.Cell(row, col).Value;
+                }
+                dataTable.Rows.Add(dataRow);
+            }
+        }
+
+        return dataTable;
+    }
+}
+```
+
+### **3. Create Different Types of Charts**
+
+Here’s how you can create different types of charts (scatter, line, bar) from the same dataset:
+
+```csharp
+using ScottPlot;
+using System;
+using System.Data;
+using System.Drawing;
+
+public class ChartGenerator
+{
+    public void CreateScatterPlot(DataTable dataTable, string outputFilePath)
+    {
+        var plt = new ScottPlot.Plot(600, 400);
+
+        double[] xData = new double[dataTable.Rows.Count];
+        double[] yData = new double[dataTable.Rows.Count];
+
+        for (int i = 0; i < dataTable.Rows.Count; i++)
+        {
+            xData[i] = Convert.ToDouble(dataTable.Rows[i][0]);
+            yData[i] = Convert.ToDouble(dataTable.Rows[i][1]);
+        }
+
+        plt.AddScatter(xData, yData);
+        plt.Title("Scatter Plot");
+        plt.XLabel("X Axis");
+        plt.YLabel("Y Axis");
+        plt.BackgroundColor(Color.White);
+
+        plt.SaveFig(outputFilePath);
+    }
+
+    public void CreateLinePlot(DataTable dataTable, string outputFilePath)
+    {
+        var plt = new ScottPlot.Plot(600, 400);
+
+        double[] xData = new double[dataTable.Rows.Count];
+        double[] yData = new double[dataTable.Rows.Count];
+
+        for (int i = 0; i < dataTable.Rows.Count; i++)
+        {
+            xData[i] = Convert.ToDouble(dataTable.Rows[i][0]);
+            yData[i] = Convert.ToDouble(dataTable.Rows[i][1]);
+        }
+
+        plt.AddLine(xData, yData);
+        plt.Title("Line Plot");
+        plt.XLabel("X Axis");
+        plt.YLabel("Y Axis");
+        plt.BackgroundColor(Color.White);
+
+        plt.SaveFig(outputFilePath);
+    }
+
+    public void CreateBarChart(DataTable dataTable, string outputFilePath)
+    {
+        var plt = new ScottPlot.Plot(600, 400);
+
+        double[] xData = new double[dataTable.Rows.Count];
+        double[] yData = new double[dataTable.Rows.Count];
+
+        for (int i = 0; i < dataTable.Rows.Count; i++)
+        {
+            xData[i] = i; // Using index for X-axis
+            yData[i] = Convert.ToDouble(dataTable.Rows[i][1]);
+        }
+
+        plt.AddBar(yData, xData);
+        plt.Title("Bar Chart");
+        plt.XLabel("Index");
+        plt.YLabel("Values");
+        plt.BackgroundColor(Color.White);
+
+        plt.SaveFig(outputFilePath);
+    }
+}
+```
+
+### **4. Putting It All Together**
+
+Here’s how you can integrate reading data from Excel and generating different types of charts:
+
+```csharp
+using System;
+using System.Data;
+using System.Windows.Forms;
+
+public class Program
+{
+    [STAThread]
+    public static void Main()
+    {
+        var excelFilePath = "path/to/your/excel/file.xlsx";
+        var scatterPlotPath = "path/to/save/scatter_plot.png";
+        var linePlotPath = "path/to/save/line_plot.png";
+        var barChartPath = "path/to/save/bar_chart.png";
+
+        var excelReader = new ExcelReader();
+        var chartGenerator = new ChartGenerator();
+
+        // Read data from Excel
+        DataTable dataTable = excelReader.ReadExcelData(excelFilePath);
+
+        // Generate and save charts
+        chartGenerator.CreateScatterPlot(dataTable, scatterPlotPath);
+        chartGenerator.CreateLinePlot(dataTable, linePlotPath);
+        chartGenerator.CreateBarChart(dataTable, barChartPath);
+
+        MessageBox.Show($"Charts saved to:\n{scatterPlotPath}\n{linePlotPath}\n{barChartPath}", 
+            "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+}
+```
+
+### **Summary**
+
+1. **Read Data**: Use ClosedXML to read data from an Excel file into a `DataTable`.
+2. **Create Charts**: Use ScottPlot to create and save different types of charts (scatter plot, line plot, bar chart) based on the data.
+3. **Integrate**: Combine reading and chart generation into a complete application.
+
+This setup allows you to generate multiple types of charts from the same dataset and save them as separate image files, which you can then use for reporting or analysis.
